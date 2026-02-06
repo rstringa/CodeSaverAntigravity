@@ -1,0 +1,425 @@
+---
+import { getCategories } from "../lib/data";
+import {
+    ChevronRight,
+    Folder,
+    Edit2,
+    Trash2,
+    Plus,
+    CornerDownRight,
+} from "@lucide/astro";
+
+const { activeCategoryId = null } = Astro.props;
+const categories = await getCategories();
+const mainCategories = categories.filter((c) => !c.parentId);
+const subCategories = categories.filter((c) => c.parentId);
+
+const getChildren = (parentId) =>
+    subCategories.filter((c) => c.parentId === parentId);
+---
+
+<ul class="category-menu" id="category-sidebar-menu">
+    <li
+        class={`category-menu-item ${!activeCategoryId || activeCategoryId === "all" ? "active" : ""}`}
+        data-category="all"
+    >
+        <Folder size={18} />
+        <span class="category-name">Todos</span>
+    </li>
+    {
+        mainCategories.map((cat) => {
+            const children = getChildren(cat.id);
+            const hasChildren = children.length > 0;
+            const isActive = activeCategoryId === cat.id;
+            const hasActiveChild = children.some(
+                (sub) => sub.id === activeCategoryId,
+            );
+            const shouldExpand = isActive || hasActiveChild;
+
+            return (
+                <li class="category-group" data-id={cat.id}>
+                    <div
+                        class={`category-menu-item ${isActive ? "active" : ""}`}
+                        data-category={cat.id}
+                        data-is-parent="true"
+                    >
+                        {hasChildren ? (
+                            <button
+                                class={`toggle-btn ${shouldExpand ? "is-expanded" : ""}`}
+                                type="button"
+                                aria-label="Toggle"
+                            >
+                                <ChevronRight size={14} class="toggle-icon" />
+                            </button>
+                        ) : (
+                            <div class="no-toggle-spacer" />
+                        )}
+
+                        <Folder size={18} />
+                        <span class="category-name">{cat.name}</span>
+
+                        <div class="category-actions">
+                            <button
+                                class="cat-action-btn add-sub-cat"
+                                data-id={cat.id}
+                                title="Subcategoría"
+                            >
+                                <Plus size={14} />
+                            </button>
+                            {cat.id !== "general" && (
+                                <>
+                                    <button
+                                        class="cat-action-btn edit-cat"
+                                        data-id={cat.id}
+                                        data-name={cat.name}
+                                        title="Renombrar"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                    <button
+                                        class="cat-action-btn delete-cat"
+                                        data-id={cat.id}
+                                        title="Borrar"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {hasChildren && (
+                        <ul
+                            class="sub-category-list"
+                            style={
+                                shouldExpand
+                                    ? "display: flex;"
+                                    : "display: none;"
+                            }
+                        >
+                            {children.map((sub) => {
+                                const isSubActive = activeCategoryId === sub.id;
+                                return (
+                                    <li
+                                        class={`category-menu-item sub-item ${isSubActive ? "active" : ""}`}
+                                        data-category={sub.id}
+                                        data-parent-id={cat.id}
+                                    >
+                                        <CornerDownRight
+                                            size={14}
+                                            class="sub-icon"
+                                        />
+                                        <span class="category-name">
+                                            {sub.name}
+                                        </span>
+                                        <div class="category-actions">
+                                            <button
+                                                class="cat-action-btn edit-cat"
+                                                data-id={sub.id}
+                                                data-name={sub.name}
+                                                title="Renombrar"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button
+                                                class="cat-action-btn delete-cat"
+                                                data-id={sub.id}
+                                                title="Borrar"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </li>
+            );
+        })
+    }
+</ul>
+
+<style>
+    .category-menu,
+    .sub-category-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .sub-category-list {
+        margin-left: 20px;
+        padding-left: 8px;
+        border-left: 1px solid var(--border-primary);
+        margin-bottom: 4px;
+    }
+
+    .category-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: background 0.2s;
+        font-size: 0.875rem;
+        user-select: none;
+    }
+
+    .category-menu-item:hover {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+    }
+
+    .category-menu-item.active {
+        background: var(--bg-tertiary);
+        color: var(--accent);
+    }
+
+    .category-name {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .toggle-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-tertiary);
+        padding: 4px;
+        margin-left: -8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        transition: transform 0.2s;
+    }
+
+    .toggle-btn:hover {
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .toggle-btn.is-expanded {
+        transform: rotate(90deg);
+    }
+
+    .no-toggle-spacer {
+        width: 16px;
+    }
+
+    .category-actions {
+        display: none;
+        gap: 4px;
+    }
+
+    .category-menu-item:hover .category-actions {
+        display: flex;
+    }
+
+    .cat-action-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-tertiary);
+        padding: 2px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .cat-action-btn:hover {
+        color: var(--text-primary);
+        background: var(--bg-secondary);
+    }
+
+    .delete-cat:hover {
+        color: var(--error);
+    }
+
+    .sub-icon {
+        opacity: 0.5;
+    }
+</style>
+
+<script is:inline>
+    (function () {
+        const menu = document.getElementById("category-sidebar-menu");
+        if (!menu) return;
+
+        // Build hierarchy for filtering
+        const hierarchy = {};
+        menu.querySelectorAll(".sub-item").forEach((sub) => {
+            const pId = sub.getAttribute("data-parent-id");
+            const sId = sub.getAttribute("data-category");
+            if (pId && sId) {
+                if (!hierarchy[pId]) hierarchy[pId] = [];
+                hierarchy[pId].push(sId);
+            }
+        });
+
+        function applyFilter(selectedId, itemElement) {
+            const grid = document.getElementById("snippets-grid");
+            if (!grid) return false;
+
+            menu.querySelectorAll(".category-menu-item").forEach((i) =>
+                i.classList.remove("active"),
+            );
+            if (itemElement) itemElement.classList.add("active");
+
+            const isParent =
+                itemElement?.getAttribute("data-is-parent") === "true";
+
+            // Expand if parent
+            if (isParent && itemElement) {
+                const group = itemElement.closest(".category-group");
+                const list = group.querySelector(".sub-category-list");
+                const toggle = group.querySelector(".toggle-btn");
+                if (list && list.style.display === "none") {
+                    list.style.display = "flex";
+                    if (toggle) toggle.classList.add("is-expanded");
+                }
+            }
+
+            const idsToShow = [selectedId];
+            if (isParent && hierarchy[selectedId]) {
+                idsToShow.push(...hierarchy[selectedId]);
+            }
+
+            const snippets = document.querySelectorAll(".snippet-card");
+            const titleEl = document.getElementById("view-title");
+            let count = 0;
+
+            snippets.forEach((card) => {
+                const cardCat = card.getAttribute("data-category-id");
+                if (selectedId === "all" || idsToShow.includes(cardCat)) {
+                    card.style.display = "flex";
+                    count++;
+                } else {
+                    card.style.display = "none";
+                }
+            });
+
+            if (titleEl && itemElement) {
+                const nameSpan = itemElement.querySelector(".category-name");
+                titleEl.textContent =
+                    selectedId === "all"
+                        ? "Todos los Snippets"
+                        : nameSpan
+                          ? nameSpan.textContent
+                          : "Categoría";
+            }
+            const badge = document.getElementById("snippet-count");
+            if (badge) badge.textContent = `${count} snippets`;
+
+            return true;
+        }
+
+        menu.addEventListener("click", (e) => {
+            const target = e.target;
+
+            const toggleBtn = target.closest(".toggle-btn");
+            if (toggleBtn) {
+                e.stopPropagation();
+                const group = toggleBtn.closest(".category-group");
+                const list = group.querySelector(".sub-category-list");
+                if (list) {
+                    const isHidden = list.style.display === "none";
+                    list.style.display = isHidden ? "flex" : "none";
+                    toggleBtn.classList.toggle("is-expanded", isHidden);
+                }
+                return;
+            }
+
+            const actionBtn = target.closest(".cat-action-btn");
+            if (actionBtn) {
+                e.stopPropagation();
+                const id = actionBtn.dataset.id;
+                if (actionBtn.classList.contains("add-sub-cat")) {
+                    const name = prompt("Nombre de la subcategoría:");
+                    if (name) createCategory(name, id);
+                } else if (actionBtn.classList.contains("edit-cat")) {
+                    const oldName = actionBtn.dataset.name;
+                    const name = prompt("Nuevo nombre:", oldName);
+                    if (name && name !== oldName) updateCategory(id, name);
+                } else if (actionBtn.classList.contains("delete-cat")) {
+                    if (
+                        confirm(
+                            "¿Eliminar categoría? Los snippets irán a 'General'.",
+                        )
+                    ) {
+                        deleteCategory(id);
+                    }
+                }
+                return;
+            }
+
+            const item = target.closest(".category-menu-item");
+            if (item) {
+                const selectedId = item.getAttribute("data-category");
+                const grid = document.getElementById("snippets-grid");
+
+                if (!grid) {
+                    window.location.href = `/?category=${selectedId}`;
+                    return;
+                }
+
+                applyFilter(selectedId, item);
+            }
+        });
+
+        // Handle URL params on load if any
+        function handleAutoFilter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const catParam = urlParams.get("category");
+            if (catParam) {
+                const item = menu.querySelector(
+                    `[data-category="${catParam}"]`,
+                );
+                if (item) applyFilter(catParam, item);
+            }
+        }
+
+        // Auto-filter on load
+        if (document.readyState === "complete") {
+            setTimeout(handleAutoFilter, 10);
+        } else {
+            window.addEventListener("load", handleAutoFilter);
+        }
+
+        async function createCategory(name, parentId) {
+            const res = await fetch("/api/categories", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, parentId }),
+            });
+            if (res.ok) window.location.reload();
+        }
+
+        async function updateCategory(id, name) {
+            const res = await fetch(`/api/categories/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name }),
+            });
+            if (res.ok) window.location.reload();
+        }
+
+        async function deleteCategory(id) {
+            const res = await fetch(`/api/categories/${id}`, {
+                method: "DELETE",
+            });
+            if (res.ok) window.location.reload();
+        }
+    })();
+</script>

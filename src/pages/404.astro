@@ -1,0 +1,30 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="404 | CodeSaverAntigravity">
+    <div class="not-found">
+        <h1>404</h1>
+        <p>Lo sentimos, no encontramos lo que buscas.</p>
+        <a href="/" class="btn-primary">Volver al inicio</a>
+    </div>
+</Layout>
+
+<style>
+    .not-found {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        text-align: center;
+    }
+    h1 {
+        font-size: 6rem;
+        color: var(--accent);
+    }
+    p {
+        margin-bottom: 2rem;
+        color: var(--text-secondary);
+    }
+</style>

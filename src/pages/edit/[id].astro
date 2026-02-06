@@ -1,0 +1,239 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { getSnippetById, getCategories } from "../../lib/data";
+import { Save, X } from "@lucide/astro";
+
+const { id } = Astro.params;
+const snippet = await getSnippetById(id);
+const categories = await getCategories();
+
+if (!snippet) {
+    return Astro.redirect("/404");
+}
+
+const mainCategories = categories.filter((c) => !c.parentId);
+const subCategories = categories.filter((c) => c.parentId);
+
+const categoryOptions = mainCategories.flatMap((parent) => [
+    { ...parent, label: parent.name },
+    ...subCategories
+        .filter((s) => s.parentId === parent.id)
+        .map((sub) => ({
+            ...sub,
+            label: `— ${sub.name}`,
+        })),
+]);
+---
+
+<Layout
+    title={`Editar Snippet | CodeSaverAntigravity`}
+    activeCategoryId={snippet.categoryId}
+>
+    <div class="form-container">
+        <header class="form-header">
+            <h1>Editar Snippet</h1>
+            <p>Modifica la información de tu snippet.</p>
+        </header>
+
+        <form id="edit-form" class="snippet-form" data-id={id}>
+            <div class="form-group">
+                <label for="title">Título</label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={snippet.title}
+                    required
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="categoryId">Categoría</label>
+                <select id="categoryId" name="categoryId">
+                    {
+                        categoryOptions.map((opt) => (
+                            <option
+                                value={opt.id}
+                                selected={opt.id === snippet.categoryId}
+                            >
+                                {opt.label}
+                            </option>
+                        ))
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Descripción corta</label>
+                <textarea id="description" name="description" rows="3"
+                    >{snippet.description}</textarea
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="code">Código o Contenido</label>
+                <textarea
+                    id="code"
+                    name="code"
+                    rows="12"
+                    class="code-editor"
+                    required>{snippet.code}</textarea
+                >
+            </div>
+
+            <div class="form-footer">
+                <button
+                    type="button"
+                    class="btn-ghost"
+                    onclick="window.history.back()"
+                >
+                    <X size={18} />
+                    <span>Cancelar</span>
+                </button>
+                <button type="submit" class="btn-primary">
+                    <Save size={18} />
+                    <span>Guardar Cambios</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</Layout>
+
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding-bottom: 4rem;
+    }
+
+    .form-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .form-header h1 {
+        font-size: 2.25rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-header p {
+        color: var(--text-secondary);
+    }
+
+    .snippet-form {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    input,
+    textarea,
+    select {
+        width: 100%;
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        color: var(--text-primary);
+        border-radius: var(--radius-sm);
+    }
+
+    .code-editor {
+        font-family:
+            ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        background: #0d0d0d;
+        color: #e0e0e0;
+        tab-size: 2;
+    }
+
+    .form-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-top: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border-primary);
+    }
+
+    .btn-ghost {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid transparent;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+
+    .btn-ghost:hover {
+        color: var(--text-primary);
+        background: var(--bg-tertiary);
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #000;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+
+    .btn-primary:hover {
+        background: var(--accent-hover);
+    }
+</style>
+
+<script>
+    const form = document.getElementById("edit-form");
+    if (form) {
+        const id = form.getAttribute("data-id");
+
+        form.addEventListener("submit", async (e: Event) => {
+            e.preventDefault();
+            const formData = new FormData(form as HTMLFormElement);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch(`/api/snippets/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                if (response.ok) {
+                    window.location.href = `/snippet/${id}`;
+                } else {
+                    alert("Error al guardar los cambios");
+                }
+            } catch (err) {
+                console.error("Error:", err);
+                alert("Error de conexión");
+            }
+        });
+    }
+</script>

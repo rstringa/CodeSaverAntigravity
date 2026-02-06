@@ -1,0 +1,22 @@
+[
+  {
+    "id": "general",
+    "name": "General",
+    "parentId": null
+  },
+  {
+    "name": "Elementor",
+    "parentId": null,
+    "id": "fd01b01d-d391-4613-b4a2-a95548209b62"
+  },
+  {
+    "name": "Wordpress",
+    "parentId": null,
+    "id": "fafee15a-de9f-4de0-97e7-35b62deabbd1"
+  },
+  {
+    "name": "PHP",
+    "parentId": "fd01b01d-d391-4613-b4a2-a95548209b62",
+    "id": "f4f67ec9-77ba-414a-bf22-7c13ce66eeac"
+  }
+]

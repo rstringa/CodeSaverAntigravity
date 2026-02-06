@@ -1,0 +1,124 @@
+---
+import Layout from "../layouts/Layout.astro";
+import SnippetCard from "../components/SnippetCard.astro";
+import { getSnippets, getCategories } from "../lib/data";
+
+const { searchParams } = Astro.url;
+const activeCategoryId = searchParams.get("category");
+
+const snippets = await getSnippets();
+const categories = await getCategories();
+
+// Map category names to snippets for convenience
+const snippetsWithCategoryNames = snippets.map((s) => {
+    const cat = categories.find((c) => c.id === s.categoryId);
+    return { ...s, categoryName: cat ? cat.name : "General" };
+});
+---
+
+<Layout
+    title="Mis Snippets | CodeSaverAntigravity"
+    activeCategoryId={activeCategoryId}
+>
+    <div class="dashboard-header">
+        <h1 id="view-title">Todos los Snippets</h1>
+        <span class="count-badge" id="snippet-count"
+            >{snippets.length} snippets</span
+        >
+    </div>
+
+    <div class="snippets-grid" id="snippets-grid">
+        {
+            snippetsWithCategoryNames.length > 0 ? (
+                snippetsWithCategoryNames.map((snippet) => (
+                    <SnippetCard snippet={snippet} />
+                ))
+            ) : (
+                <div class="empty-state">
+                    <p>No hay snippets todavía. ¡Crea el primero!</p>
+                </div>
+            )
+        }
+    </div>
+</Layout>
+
+<style>
+    .dashboard-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .count-badge {
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .snippets-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 4rem;
+        background: var(--bg-secondary);
+        border: 1px dashed var(--border-primary);
+        border-radius: var(--radius-lg);
+        color: var(--text-tertiary);
+    }
+</style>
+
+<script is:inline>
+    // Search and Filtering Logic
+    function initSearch() {
+        const searchInput = document.getElementById("global-search");
+        const snippetsGrid = document.getElementById("snippets-grid");
+        const countBadge = document.getElementById("snippet-count");
+
+        if (searchInput && snippetsGrid) {
+            searchInput.addEventListener("input", (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                const cards = snippetsGrid.querySelectorAll(".snippet-card");
+                let visibleCount = 0;
+
+                cards.forEach((card) => {
+                    const titleEl = card.querySelector(".snippet-title");
+                    const descEl = card.querySelector(".snippet-desc");
+                    const codeEl = card.querySelector(".code-preview pre");
+
+                    const title = titleEl
+                        ? titleEl.textContent.toLowerCase()
+                        : "";
+                    const desc = descEl ? descEl.textContent.toLowerCase() : "";
+                    const code = codeEl ? codeEl.textContent.toLowerCase() : "";
+
+                    if (
+                        title.includes(query) ||
+                        desc.includes(query) ||
+                        code.includes(query)
+                    ) {
+                        card.style.display = "flex";
+                        visibleCount++;
+                    } else {
+                        card.style.display = "none";
+                    }
+                });
+
+                if (countBadge) {
+                    countBadge.textContent = `${visibleCount} snippets`;
+                }
+            });
+        }
+    }
+
+    // Initialize
+    initSearch();
+</script>

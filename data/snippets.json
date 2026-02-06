@@ -1,0 +1,21 @@
+[
+  {
+    "title": "PHP - Traduccion de los menu items en /mi-cuenta",
+    "categoryId": "f4f67ec9-77ba-414a-bf22-7c13ce66eeac",
+    "subcategory": "",
+    "description": "Script para traducir los items del menu si se usa el widget Mi Cuenta de Elementor PRO. Sino sale en ingles.",
+    "code": "add_filter( 'woocommerce_account_menu_items', function ( $items ) {\n    $items['dashboard']       = 'Escritorio';\n    $items['orders']          = 'Pedidos';\n    $items['downloads']       = 'Descargas';\n    $items['edit-address']    = 'Direcciones';\n    $items['edit-account']    = 'Detalles de la cuenta';\n    $items['customer-logout'] = 'Cerrar sesión';\n    return $items;\n}, 99 );",
+    "id": "7811a94e-438c-491f-8eb8-5d39a41d4968",
+    "createdAt": "2026-02-06T20:05:29.759Z",
+    "updatedAt": "2026-02-06T21:29:14.088Z"
+  },
+  {
+    "title": "Espera a la inicializacion del Swiper",
+    "categoryId": "fd01b01d-d391-4613-b4a2-a95548209b62",
+    "subcategory": "",
+    "description": "",
+    "code": "/*************************************\n//  HOME - Elementor Custom Slider //\n************************************/ \n(function($) {\n    const selector = '#custom_slider .swiper';\n    let attempts = 0;\n    const maxAttempts = 50;\n\n    const checkSwiper = setInterval(function() {\n        const $carousel = $(selector);\n  const carouselEl = $carousel[0];\n  const swiperInstance = carouselEl?.swiper;\n        if (swiperInstance) {\n            clearInterval(checkSwiper);\n            //console.log('¡Swiper detectado!', swiperInstance);\n           startCustomCarousel(swiperInstance);\n        }\n        attempts++;\n        if (attempts >= maxAttempts) {\n            clearInterval(checkSwiper);\n           // console.warn('No se encontró la instancia de Swiper en el tiempo esperado.');\n        }\n    }, 100);\n\n\t\nfunction startCustomCarousel(slider) {\n  if (!slider?.params?.autoplay || !slider.autoplay) return;\n\n  slider.params.autoplay.disableOnInteraction = false;\n\n  const links = document.querySelectorAll('.custom-slider-nav a');\n  if (!links.length) return;\n\n  const delay = slider.params.autoplay.delay || 3000;\n\n  function setActiveLink(activeIndex) {\n    links.forEach((link, i) => {\n      link.classList.toggle('is-active', i === activeIndex);\n    });\n  }\n\n  function animateProgress(activeIndex) {\n    if (!links[activeIndex]) return;\n\n    links.forEach(el => {\n      const bar = el.querySelector('.progress');\n      if (!bar) return;\n      bar.style.transition = 'none';\n      bar.style.width = '0';\n    });\n\n    setActiveLink(activeIndex);\n\n    const activeBar = links[activeIndex].querySelector('.progress');\n    if (!activeBar) return;\n\n    void activeBar.offsetWidth;\n    activeBar.style.transition = `width ${delay}ms linear`;\n    activeBar.style.width = '100%';\n  }\n\n  links.forEach((link, i) => {\n    link.addEventListener('click', e => {\n      e.preventDefault();\n      slider.slideTo(i);\n      animateProgress(i);\n    });\n  });\n\n  slider.on('slideChange', function () {\n    animateProgress(this.realIndex);\n  });\n\n  animateProgress(0);\n  slider.autoplay.start();\n}\n\n\t\n})(jQuery);\n\n\n",
+    "id": "af486f81-aef7-4260-b086-5d25998b2e73",
+    "createdAt": "2026-02-06T20:18:06.353Z"
+  }
+]
