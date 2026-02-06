@@ -9,21 +9,42 @@ const activeCategoryId = searchParams.get("category");
 const snippets = await getSnippets();
 const categories = await getCategories();
 
+// Server-side filtering by category
+let filteredSnippets = snippets;
+let viewTitle = "Todos los Snippets";
+
+if (activeCategoryId) {
+    const category = categories.find((c) => c.id === activeCategoryId);
+    if (category) {
+        viewTitle = `Snippets en ${category.name}`;
+
+        // Find all subcategories to include their snippets too
+        const subCategoryIds = categories
+            .filter((c) => c.parentId === activeCategoryId)
+            .map((c) => c.id);
+
+        const allTargetCategoryIds = [activeCategoryId, ...subCategoryIds];
+        filteredSnippets = snippets.filter((s) =>
+            allTargetCategoryIds.includes(s.categoryId),
+        );
+    }
+}
+
 // Map category names to snippets for convenience
-const snippetsWithCategoryNames = snippets.map((s) => {
+const snippetsWithCategoryNames = filteredSnippets.map((s) => {
     const cat = categories.find((c) => c.id === s.categoryId);
     return { ...s, categoryName: cat ? cat.name : "General" };
 });
 ---
 
 <Layout
-    title="Mis Snippets | CodeSaverAntigravity"
+    title={`${viewTitle} | CodeSaverAntigravity`}
     activeCategoryId={activeCategoryId}
 >
     <div class="dashboard-header">
-        <h1 id="view-title">Todos los Snippets</h1>
+        <h1 id="view-title">{viewTitle}</h1>
         <span class="count-badge" id="snippet-count"
-            >{snippets.length} snippets</span
+            >{snippetsWithCategoryNames.length} snippets</span
         >
     </div>
 
