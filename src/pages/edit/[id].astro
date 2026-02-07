@@ -85,12 +85,18 @@ const categoryOptions = mainCategories.flatMap((parent) => [
                 <button
                     type="button"
                     class="btn-ghost"
-                    onclick="window.history.back()"
+                    id="cancel-btn"
+                    disabled
                 >
                     <X size={18} />
                     <span>Cancelar</span>
                 </button>
-                <button type="submit" class="btn-primary">
+                <button
+                    type="submit"
+                    class="btn-primary"
+                    id="save-btn"
+                    disabled
+                >
                     <Save size={18} />
                     <span>Guardar Cambios</span>
                 </button>
@@ -100,6 +106,7 @@ const categoryOptions = mainCategories.flatMap((parent) => [
 </Layout>
 
 <style>
+    /* ... existing styles ... */
     .form-container {
         max-width: 800px;
         margin: 0 auto;
@@ -182,9 +189,11 @@ const categoryOptions = mainCategories.flatMap((parent) => [
         align-items: center;
         gap: 0.5rem;
         font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
     }
 
-    .btn-ghost:hover {
+    .btn-ghost:hover:not(:disabled) {
         color: var(--text-primary);
         background: var(--bg-tertiary);
     }
@@ -199,21 +208,75 @@ const categoryOptions = mainCategories.flatMap((parent) => [
         align-items: center;
         gap: 0.5rem;
         font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
         background: var(--accent-hover);
+    }
+
+    .btn-primary:disabled,
+    .btn-ghost:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
     }
 </style>
 
 <script>
-    const form = document.getElementById("edit-form");
-    if (form) {
+    const form = document.getElementById("edit-form") as HTMLFormElement;
+    const saveBtn = document.getElementById("save-btn") as HTMLButtonElement;
+    const cancelBtn = document.getElementById(
+        "cancel-btn",
+    ) as HTMLButtonElement;
+
+    if (form && saveBtn && cancelBtn) {
         const id = form.getAttribute("data-id");
+        let isDirty = false;
+
+        // Store initial values
+        const initialData = new FormData(form);
+        const initialState = JSON.stringify(
+            Object.fromEntries(initialData.entries()),
+        );
+
+        const checkChanges = () => {
+            const currentData = new FormData(form);
+            const currentState = JSON.stringify(
+                Object.fromEntries(currentData.entries()),
+            );
+
+            isDirty = initialState !== currentState;
+            saveBtn.disabled = !isDirty;
+            cancelBtn.disabled = !isDirty;
+        };
+
+        form.addEventListener("input", checkChanges);
+
+        // Before leave confirmation
+        window.addEventListener("beforeunload", (e) => {
+            if (isDirty) {
+                e.preventDefault();
+                e.returnValue = ""; // Standard way to trigger browser confirmation
+            }
+        });
+
+        cancelBtn.addEventListener("click", () => {
+            if (isDirty) {
+                if (
+                    confirm(
+                        "Tienes cambios sin guardar. ¿Deseas descartarlos y volver?",
+                    )
+                ) {
+                    isDirty = false; // Disable flag to allow navigation
+                    window.history.back();
+                }
+            }
+        });
 
         form.addEventListener("submit", async (e: Event) => {
             e.preventDefault();
-            const formData = new FormData(form as HTMLFormElement);
+            const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
 
             try {
@@ -226,6 +289,7 @@ const categoryOptions = mainCategories.flatMap((parent) => [
                 });
 
                 if (response.ok) {
+                    isDirty = false; // Disable flag before redirect
                     window.location.href = `/snippet/${id}`;
                 } else {
                     alert("Error al guardar los cambios");
