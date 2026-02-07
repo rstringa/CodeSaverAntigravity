@@ -1,5 +1,5 @@
 ---
-import { getCategories } from "../lib/data";
+import { getCategories, getSnippets } from "../lib/data";
 import {
     ChevronRight,
     Folder,
@@ -11,11 +11,25 @@ import {
 
 const { activeCategoryId = null } = Astro.props;
 const categories = await getCategories();
+const snippets = await getSnippets();
+
 const mainCategories = categories.filter((c) => !c.parentId);
 const subCategories = categories.filter((c) => c.parentId);
 
-const getChildren = (parentId) =>
-    subCategories.filter((c) => c.parentId === parentId);
+const getChildren = (parentId: string) =>
+    subCategories.filter((c: any) => c.parentId === parentId);
+
+const getCount = (catId: string, isParent: boolean = false) => {
+    if (catId === "all") return snippets.length;
+
+    const targetIds = [catId];
+    if (isParent) {
+        const children = getChildren(catId);
+        targetIds.push(...children.map((c: any) => c.id));
+    }
+
+    return snippets.filter((s: any) => targetIds.includes(s.categoryId)).length;
+};
 ---
 
 <ul class="category-menu" id="category-sidebar-menu">
@@ -25,14 +39,15 @@ const getChildren = (parentId) =>
     >
         <Folder size={18} />
         <span class="category-name">Todos</span>
+        <span class="category-count">({getCount("all")})</span>
     </li>
     {
-        mainCategories.map((cat) => {
+        mainCategories.map((cat: any) => {
             const children = getChildren(cat.id);
             const hasChildren = children.length > 0;
             const isActive = activeCategoryId === cat.id;
             const hasActiveChild = children.some(
-                (sub) => sub.id === activeCategoryId,
+                (sub: any) => sub.id === activeCategoryId,
             );
             const shouldExpand = isActive || hasActiveChild;
 
@@ -57,6 +72,9 @@ const getChildren = (parentId) =>
 
                         <Folder size={18} />
                         <span class="category-name">{cat.name}</span>
+                        <span class="category-count">
+                            ({getCount(cat.id, true)})
+                        </span>
 
                         <div class="category-actions">
                             <button
@@ -98,7 +116,7 @@ const getChildren = (parentId) =>
                                     : "display: none;"
                             }
                         >
-                            {children.map((sub) => {
+                            {children.map((sub: any) => {
                                 const isSubActive = activeCategoryId === sub.id;
                                 return (
                                     <li
@@ -112,6 +130,9 @@ const getChildren = (parentId) =>
                                         />
                                         <span class="category-name">
                                             {sub.name}
+                                        </span>
+                                        <span class="category-count">
+                                            ({getCount(sub.id)})
                                         </span>
                                         <div class="category-actions">
                                             <button
@@ -187,6 +208,18 @@ const getChildren = (parentId) =>
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .category-count {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        margin-left: 4px;
+        font-weight: 400;
+    }
+
+    .category-menu-item.active .category-count {
+        color: var(--accent);
+        opacity: 0.8;
     }
 
     .toggle-btn {
