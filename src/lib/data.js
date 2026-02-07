@@ -1,120 +1,163 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import { supabase } from './supabase';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const SNIPPETS_FILE = path.join(DATA_DIR, 'snippets.json');
-const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
+// Map database fields to application fields if they differ
+const mapSnippet = (s) => ({
+    id: s.id,
+    title: s.title,
+    description: s.description,
+    code: s.code,
+    categoryId: s.category_id,
+    createdAt: s.created_at,
+    updatedAt: s.updated_at
+});
 
-// Helper to ensure files exist
-async function ensureFiles() {
-    try {
-        await fs.access(SNIPPETS_FILE);
-    } catch {
-        await fs.writeFile(SNIPPETS_FILE, JSON.stringify([]));
-    }
-    try {
-        await fs.access(CATEGORIES_FILE);
-    } catch {
-        await fs.writeFile(CATEGORIES_FILE, JSON.stringify([{ id: 'general', name: 'General', parentId: null }]));
-    }
-}
+const mapCategory = (c) => ({
+    id: c.id,
+    name: c.name,
+    parentId: c.parent_id,
+    createdAt: c.created_at
+});
 
 export async function getSnippets() {
-    await ensureFiles();
-    const data = await fs.readFile(SNIPPETS_FILE, 'utf-8');
-    return JSON.parse(data);
-}
+    const { data, error } = await supabase
+        .from('snippets')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-export async function saveSnippets(snippets) {
-    await fs.writeFile(SNIPPETS_FILE, JSON.stringify(snippets, null, 2));
+    if (error) {
+        console.error('Error fetching snippets:', error);
+        return [];
+    }
+    return data.map(mapSnippet);
 }
 
 export async function getSnippetById(id) {
-    const snippets = await getSnippets();
-    return snippets.find(s => s.id === id);
+    const { data, error } = await supabase
+        .from('snippets')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error('Error fetching snippet:', error);
+        return null;
+    }
+    return mapSnippet(data);
 }
 
 export async function addSnippet(snippet) {
-    const snippets = await getSnippets();
-    const newSnippet = {
-        ...snippet,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString()
-    };
-    snippets.push(newSnippet);
-    await saveSnippets(snippets);
-    return newSnippet;
+    const { data, error } = await supabase
+        .from('snippets')
+        .insert([{
+            title: snippet.title,
+            description: snippet.description,
+            code: snippet.code,
+            category_id: snippet.categoryId || null
+        }])
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error adding snippet:', error);
+        throw error;
+    }
+    return mapSnippet(data);
 }
 
 export async function updateSnippet(id, updatedData) {
-    const snippets = await getSnippets();
-    const index = snippets.findIndex(s => s.id === id);
-    if (index !== -1) {
-        snippets[index] = { ...snippets[index], ...updatedData, updatedAt: new Date().toISOString() };
-        await saveSnippets(snippets);
-        return snippets[index];
+    const payload = {
+        updated_at: new Date().toISOString()
+    };
+    if (updatedData.title !== undefined) payload.title = updatedData.title;
+    if (updatedData.description !== undefined) payload.description = updatedData.description;
+    if (updatedData.code !== undefined) payload.code = updatedData.code;
+    if (updatedData.categoryId !== undefined) payload.category_id = updatedData.categoryId;
+
+    const { data, error } = await supabase
+        .from('snippets')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating snippet:', error);
+        return null;
     }
-    return null;
+    return mapSnippet(data);
 }
 
 export async function deleteSnippet(id) {
-    const snippets = await getSnippets();
-    const filtered = snippets.filter(s => s.id !== id);
-    await saveSnippets(filtered);
+    const { error } = await supabase
+        .from('snippets')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error deleting snippet:', error);
+        throw error;
+    }
 }
 
 export async function getCategories() {
-    await ensureFiles();
-    const data = await fs.readFile(CATEGORIES_FILE, 'utf-8');
-    return JSON.parse(data);
-}
+    const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name', { ascending: true });
 
-export async function saveCategories(categories) {
-    await fs.writeFile(CATEGORIES_FILE, JSON.stringify(categories, null, 2));
+    if (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+    }
+    return data.map(mapCategory);
 }
 
 export async function addCategory(category) {
-    const categories = await getCategories();
-    const newCategory = {
-        ...category,
-        id: crypto.randomUUID()
-    };
-    categories.push(newCategory);
-    await saveCategories(categories);
-    return newCategory;
+    const { data, error } = await supabase
+        .from('categories')
+        .insert([{
+            name: category.name,
+            parent_id: category.parentId || null
+        }])
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error adding category:', error.message, error.details, error.hint);
+        throw error;
+    }
+    return mapCategory(data);
 }
 
 export async function updateCategory(id, updatedData) {
-    const categories = await getCategories();
-    const index = categories.findIndex(c => c.id === id);
-    if (index !== -1) {
-        categories[index] = { ...categories[index], ...updatedData };
-        await saveCategories(categories);
-        return categories[index];
+    const { data, error } = await supabase
+        .from('categories')
+        .update({
+            name: updatedData.name
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating category:', error);
+        return null;
     }
-    return null;
+    return mapCategory(data);
 }
 
 export async function deleteCategory(id) {
-    const categories = await getCategories();
-    if (id === 'general') return;
+    // Note: The SQL schema handles "ON DELETE CASCADE" for subcategories
+    // and "ON DELETE SET NULL" (or default general) for snippets.
+    // However, if we want to mimic the exact behavior of moving snippets to General:
 
-    // Find all IDs to delete (parent + its children)
-    const idsToDelete = [id];
-    const children = categories.filter(c => c.parentId === id);
-    children.forEach(child => idsToDelete.push(child.id));
+    const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
 
-    // Filter categories
-    const newCategories = categories.filter(c => !idsToDelete.includes(c.id));
-    await saveCategories(newCategories);
-
-    // Reassign snippets from all deleted categories to General
-    const snippets = await getSnippets();
-    const updatedSnippets = snippets.map(s => {
-        if (idsToDelete.includes(s.categoryId)) {
-            return { ...s, categoryId: 'general' };
-        }
-        return s;
-    });
-    await saveSnippets(updatedSnippets);
+    if (error) {
+        console.error('Error deleting category:', error);
+        throw error;
+    }
 }
