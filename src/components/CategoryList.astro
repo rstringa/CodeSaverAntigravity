@@ -13,7 +13,21 @@ const { activeCategoryId = null } = Astro.props;
 const categories = await getCategories();
 const snippets = await getSnippets();
 
-const mainCategories = categories.filter((c) => !c.parentId);
+const GENERAL_CATEGORY_ID = "00000000-0000-0000-0000-000000000000";
+
+// Separate and sort main categories: General first, then alphabetically
+const allMainCategories = categories.filter((c) => !c.parentId);
+const generalCategory = allMainCategories.find(
+    (c) => c.id === GENERAL_CATEGORY_ID,
+);
+const otherMainCategories = allMainCategories
+    .filter((c) => c.id !== GENERAL_CATEGORY_ID)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+const mainCategories = generalCategory
+    ? [generalCategory, ...otherMainCategories]
+    : otherMainCategories;
+
 const subCategories = categories.filter((c) => c.parentId);
 
 const getChildren = (parentId: string) =>
@@ -407,7 +421,7 @@ const getCount = (catId: string, isParent: boolean = false) => {
                 const grid = document.getElementById("snippets-grid");
 
                 if (!grid) {
-                    window.location.href = `/?category=${selectedId}`;
+                    window.location.href = `/dashboard?category=${selectedId}`;
                     return;
                 }
 

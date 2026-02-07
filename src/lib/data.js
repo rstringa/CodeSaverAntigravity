@@ -7,6 +7,7 @@ const mapSnippet = (s) => ({
     description: s.description,
     code: s.code,
     categoryId: s.category_id,
+    userId: s.user_id,
     createdAt: s.created_at,
     updatedAt: s.updated_at
 });
@@ -15,6 +16,7 @@ const mapCategory = (c) => ({
     id: c.id,
     name: c.name,
     parentId: c.parent_id,
+    userId: c.user_id,
     createdAt: c.created_at
 });
 
@@ -25,7 +27,7 @@ export async function getSnippets() {
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error fetching snippets:', error);
+        console.error('Error fetching snippets:', error.message);
         return [];
     }
     return data.map(mapSnippet);
@@ -39,7 +41,7 @@ export async function getSnippetById(id) {
         .single();
 
     if (error) {
-        console.error('Error fetching snippet:', error);
+        console.error('Error fetching snippet:', error.message);
         return null;
     }
     return mapSnippet(data);
@@ -58,7 +60,7 @@ export async function addSnippet(snippet) {
         .single();
 
     if (error) {
-        console.error('Error adding snippet:', error);
+        console.error('Error adding snippet:', error.message);
         throw error;
     }
     return mapSnippet(data);
@@ -81,7 +83,7 @@ export async function updateSnippet(id, updatedData) {
         .single();
 
     if (error) {
-        console.error('Error updating snippet:', error);
+        console.error('Error updating snippet:', error.message);
         return null;
     }
     return mapSnippet(data);
@@ -94,7 +96,7 @@ export async function deleteSnippet(id) {
         .eq('id', id);
 
     if (error) {
-        console.error('Error deleting snippet:', error);
+        console.error('Error deleting snippet:', error.message);
         throw error;
     }
 }
@@ -106,7 +108,7 @@ export async function getCategories() {
         .order('name', { ascending: true });
 
     if (error) {
-        console.error('Error fetching categories:', error);
+        console.error('Error fetching categories:', error.message);
         return [];
     }
     return data.map(mapCategory);
@@ -123,7 +125,7 @@ export async function addCategory(category) {
         .single();
 
     if (error) {
-        console.error('Error adding category:', error.message, error.details, error.hint);
+        console.error('Error adding category:', error.message);
         throw error;
     }
     return mapCategory(data);
@@ -140,24 +142,20 @@ export async function updateCategory(id, updatedData) {
         .single();
 
     if (error) {
-        console.error('Error updating category:', error);
+        console.error('Error updating category:', error.message);
         return null;
     }
     return mapCategory(data);
 }
 
 export async function deleteCategory(id) {
-    // Note: The SQL schema handles "ON DELETE CASCADE" for subcategories
-    // and "ON DELETE SET NULL" (or default general) for snippets.
-    // However, if we want to mimic the exact behavior of moving snippets to General:
-
     const { error } = await supabase
         .from('categories')
         .delete()
         .eq('id', id);
 
     if (error) {
-        console.error('Error deleting category:', error);
+        console.error('Error deleting category:', error.message);
         throw error;
     }
 }

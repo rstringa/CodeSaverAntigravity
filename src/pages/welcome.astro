@@ -7,22 +7,7 @@ import {
     Layout as LayoutIcon,
     LogIn,
     UserPlus,
-    ArrowRight,
 } from "@lucide/astro";
-import { supabase } from "../lib/supabase";
-
-// Check if user is authenticated
-const accessToken = Astro.cookies.get("sb-access-token")?.value;
-const refreshToken = Astro.cookies.get("sb-refresh-token")?.value;
-let isAuthenticated = false;
-
-if (accessToken && refreshToken) {
-    const { data } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-    });
-    if (data.session) isAuthenticated = true;
-}
 ---
 
 <Layout title="CodeSaverAntigravity | Tu librería de código personal">
@@ -40,25 +25,14 @@ if (accessToken && refreshToken) {
                     volver a buscar el mismo código en Google por décima vez.
                 </p>
                 <div class="hero-cta">
-                    {
-                        isAuthenticated ? (
-                            <a href="/dashboard" class="btn-primary">
-                                <ArrowRight size={20} />
-                                Ir al Dashboard
-                            </a>
-                        ) : (
-                            <>
-                                <a href="/register" class="btn-primary">
-                                    <UserPlus size={20} />
-                                    Empieza Gratis
-                                </a>
-                                <a href="/login" class="btn-secondary">
-                                    <LogIn size={20} />
-                                    Iniciar Sesión
-                                </a>
-                            </>
-                        )
-                    }
+                    <a href="/register" class="btn-primary">
+                        <UserPlus size={20} />
+                        Empieza Gratis
+                    </a>
+                    <a href="/login" class="btn-secondary">
+                        <LogIn size={20} />
+                        Iniciar Sesión
+                    </a>
                 </div>
             </div>
             <div class="hero-visual">
