@@ -345,21 +345,23 @@ const getChildren = (parentId) =>
             if (actionBtn) {
                 e.stopPropagation();
                 const id = actionBtn.dataset.id;
+                const name = actionBtn.dataset.name;
+
+                if (!window.categoryModal) return;
+
                 if (actionBtn.classList.contains("add-sub-cat")) {
-                    const name = prompt("Nombre de la subcategoría:");
-                    if (name) createCategory(name, id);
+                    window.categoryModal.open({ type: "create", parentId: id });
                 } else if (actionBtn.classList.contains("edit-cat")) {
-                    const oldName = actionBtn.dataset.name;
-                    const name = prompt("Nuevo nombre:", oldName);
-                    if (name && name !== oldName) updateCategory(id, name);
+                    window.categoryModal.open({
+                        type: "edit",
+                        categoryId: id,
+                        categoryName: name,
+                    });
                 } else if (actionBtn.classList.contains("delete-cat")) {
-                    if (
-                        confirm(
-                            "¿Eliminar categoría? Los snippets irán a 'General'.",
-                        )
-                    ) {
-                        deleteCategory(id);
-                    }
+                    window.categoryModal.open({
+                        type: "delete",
+                        categoryId: id,
+                    });
                 }
                 return;
             }
@@ -395,31 +397,6 @@ const getChildren = (parentId) =>
             setTimeout(handleAutoFilter, 10);
         } else {
             window.addEventListener("load", handleAutoFilter);
-        }
-
-        async function createCategory(name, parentId) {
-            const res = await fetch("/api/categories", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name, parentId }),
-            });
-            if (res.ok) window.location.reload();
-        }
-
-        async function updateCategory(id, name) {
-            const res = await fetch(`/api/categories/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name }),
-            });
-            if (res.ok) window.location.reload();
-        }
-
-        async function deleteCategory(id) {
-            const res = await fetch(`/api/categories/${id}`, {
-                method: "DELETE",
-            });
-            if (res.ok) window.location.reload();
         }
     })();
 </script>

@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import CategoryList from "../components/CategoryList.astro";
+import CategoryModal from "../components/CategoryModal.astro";
 import {
     Search,
     Plus,
@@ -236,24 +237,14 @@ const { title = "CodeSaverAntigravity", activeCategoryId = null } = Astro.props;
             }
         </style>
 
+        <CategoryModal />
+
         <script is:inline>
             const addCategoryBtn = document.querySelector(".add-category-btn");
             if (addCategoryBtn) {
-                addCategoryBtn.addEventListener("click", async () => {
-                    const name = prompt("Nombre de la nueva categoría:");
-                    if (name) {
-                        try {
-                            const response = await fetch("/api/categories", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ name, parentId: null }),
-                            });
-                            if (response.ok) {
-                                window.location.reload();
-                            }
-                        } catch (err) {
-                            console.error("Error:", err);
-                        }
+                addCategoryBtn.addEventListener("click", () => {
+                    if (window.categoryModal) {
+                        window.categoryModal.open({ type: "create" });
                     }
                 });
             }

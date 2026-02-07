@@ -23,5 +23,15 @@
     "name": "Test",
     "parentId": null,
     "id": "e7f2a1b4-5c9d-4e8a-bfe2-7d13ce66eeac"
+  },
+  {
+    "name": "Una categoria de nombre largo",
+    "parentId": null,
+    "id": "b5f9987d-698f-4240-b78f-5205cce029d0"
+  },
+  {
+    "name": "Subcategoria de nombre largoooo",
+    "parentId": "b5f9987d-698f-4240-b78f-5205cce029d0",
+    "id": "646ae07a-dac1-41ac-986f-7856d3b0196d"
   }
 ]
