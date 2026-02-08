@@ -74,6 +74,7 @@ const lang = "javascript";
                             class="icon-action-btn tiny-copy-btn"
                             data-code={snippet.code}
                             title="Copiar"
+                            aria-label="Copiar código"
                         >
                             <Copy size={16} />
                         </button>
@@ -81,6 +82,7 @@ const lang = "javascript";
                             href={`/edit/${id}`}
                             class="icon-action-btn edit-btn"
                             title="Editar"
+                            aria-label="Editar snippet"
                         >
                             <Edit2 size={16} />
                         </a>
@@ -88,6 +90,7 @@ const lang = "javascript";
                             class="icon-action-btn delete-btn"
                             data-id={id}
                             title="Eliminar"
+                            aria-label="Eliminar snippet"
                         >
                             <Trash2 size={16} />
                         </button>

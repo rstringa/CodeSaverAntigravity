@@ -18,6 +18,7 @@ const { snippet } = Astro.props;
                 class="icon-btn copy-btn"
                 data-code={snippet.code}
                 title="Copiar código"
+                aria-label="Copiar código al portapapeles"
             >
                 <Copy size={16} />
             </button>
@@ -25,6 +26,7 @@ const { snippet } = Astro.props;
                 href={`/edit/${snippet.id}`}
                 class="icon-btn edit-btn"
                 title="Editar"
+                aria-label={`Editar snippet: ${snippet.title}`}
             >
                 <Edit2 size={16} />
             </a>
@@ -32,6 +34,7 @@ const { snippet } = Astro.props;
                 class="icon-btn delete-btn"
                 data-id={snippet.id}
                 title="Eliminar"
+                aria-label={`Eliminar snippet: ${snippet.title}`}
             >
                 <Trash2 size={16} />
             </button>
