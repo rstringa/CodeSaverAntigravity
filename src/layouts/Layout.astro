@@ -14,6 +14,11 @@ import {
 import { supabase } from "../lib/supabase";
 import { LogOut } from "@lucide/astro";
 
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/inter/600.css";
+import "@fontsource/inter/700.css";
+
 const { title = "CodeSaverAntigravity", activeCategoryId = null } = Astro.props;
 
 // Obtener sesión en el servidor
@@ -42,12 +47,6 @@ const isAuthPage =
         <meta name="viewport" content="width=device-width" />
         <meta name="generator" content={Astro.generator} />
         <title>{title}</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-            rel="stylesheet"
-        />
     </head>
     <body class={!isAuthenticated || isAuthPage ? "public-view" : ""}>
         <div class="app-container">
